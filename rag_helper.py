@@ -42,6 +42,17 @@ class RAGBase:
 
         return "\n".join(lines).strip()
     
+    def search(self, query, num_results=5):
+        boost_dict = {"question": 3.0, "section": 0.5}
+        filter_dict = {"course": self.course}
+
+        return self.index.search(
+            query,
+            num_results=num_results,
+            boost_dict=boost_dict,
+            filter_dict=filter_dict
+        )
+    
     def build_prompt(self, query, search_results):
         context = self.build_context(search_results)
         return self.prompt_template.format(
@@ -49,13 +60,13 @@ class RAGBase:
     
     def llm(self, prompt):
         input_message = [
-            {"role": "developer", "content": self.instruction},
+            {"role": "system", "content": self.instruction},
             {"role": "user", "content": prompt}
         ]
 
-        response = self.llm_client.response.create(
+        response = self.llm_client.responses.create(
             model=self.model,
-            input=input_message
+            input=input_message,
         )
 
         return response.output_text
